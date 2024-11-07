@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = [
+    "packages/burkaz_core",
+    "packages/burkaz_core_ffi"
+]
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = "symbols"

@@ -3,7 +3,7 @@ use tantivy::query::{
     RegexPhraseQuery, TermQuery, TermSetQuery,
 };
 
-use crate::{schema::BurkazIndexingStrategy, term::BurkazTerm};
+use crate::{index::BurkazIndex, schema::BurkazIndexingStrategy, term::BurkazTerm};
 
 /// A query that can be executed against the index.
 pub enum BurkazQuery {
@@ -48,6 +48,9 @@ pub enum BurkazQuery {
         query: Box<BurkazQuery>,
         boost: f32,
     },
+    Parse {
+        query_text: String,
+    },
 }
 
 impl BurkazQuery {
@@ -61,25 +64,25 @@ impl BurkazQuery {
 }
 
 impl BurkazQuery {
-    pub fn to_tantivy_query(&self) -> Box<dyn Query> {
+    pub fn to_tantivy_query(&self, index: &BurkazIndex) -> Box<dyn Query> {
         match self {
             Self::All => Box::new(AllQuery),
             Self::Empty => Box::new(EmptyQuery),
             Self::And(queries) => Box::new(BooleanQuery::new(
                 queries
                     .iter()
-                    .map(|query| (Occur::Must, query.to_tantivy_query()))
+                    .map(|query| (Occur::Must, query.to_tantivy_query(index)))
                     .collect(),
             )),
             Self::Or(queries) => Box::new(BooleanQuery::new(
                 queries
                     .iter()
-                    .map(|query| (Occur::Should, query.to_tantivy_query()))
+                    .map(|query| (Occur::Should, query.to_tantivy_query(index)))
                     .collect(),
             )),
             Self::Not(query) => Box::new(BooleanQuery::new(vec![(
                 Occur::MustNot,
-                query.to_tantivy_query(),
+                query.to_tantivy_query(index),
             )])),
             Self::Term {
                 term,
@@ -137,7 +140,15 @@ impl BurkazQuery {
                 query
             }
             Self::Boost { query, boost } => {
-                Box::new(BoostQuery::new(query.to_tantivy_query(), *boost))
+                Box::new(BoostQuery::new(query.to_tantivy_query(index), *boost))
+            }
+            Self::Parse { query_text } => {
+                let parsed_query = index
+                    .query_parser()
+                    .parse_query(&query_text)
+                    .unwrap_or(Box::new(EmptyQuery));
+
+                parsed_query
             }
         }
     }

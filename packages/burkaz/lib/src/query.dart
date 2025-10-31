@@ -130,3 +130,11 @@ class BoostQuery extends Query {
   /// The boost to apply.
   final Score boost;
 }
+
+/// A query that parses a query text.
+class ParseQuery extends Query {
+  const ParseQuery(this.queryText);
+
+  /// The query text to parse.
+  final String queryText;
+}

@@ -153,3 +153,15 @@ pub extern "C" fn burkaz_regex_phrase_query(
     };
     query_into_raw!(query)
 }
+
+#[unsafe(no_mangle)]
+pub extern "C" fn burkaz_parse_query(
+    query_text_ptr: *const c_char,
+    query_text_len: usize,
+) -> *const c_void {
+    let query_text = unsafe {
+        std::str::from_utf8_unchecked(std::slice::from_raw_parts(query_text_ptr.cast(), query_text_len))
+    };
+    let query = BurkazQuery::Parse { query_text: query_text.to_owned() };
+    query_into_raw!(query)
+}

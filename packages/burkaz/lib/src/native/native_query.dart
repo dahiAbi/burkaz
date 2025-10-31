@@ -104,6 +104,11 @@ extension QueryToNativeExtension on Query {
           slop,
           maxExpansions,
         );
+      case ParseQuery(:final queryText):
+        return burkaz_parse_query(
+          queryText.toNativeUtf8(allocator: allocator).cast(),
+          queryText.length,
+        );
     }
   }
 }

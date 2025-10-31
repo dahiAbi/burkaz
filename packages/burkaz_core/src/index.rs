@@ -8,7 +8,7 @@ use tantivy::{
     TantivyError,
     directory::{Directory, MmapDirectory, RamDirectory},
     indexer::IndexWriterOptions,
-    query::Query,
+    query::{Query, QueryParser},
 };
 
 use crate::error::BurkazError;
@@ -20,6 +20,7 @@ pub struct BurkazIndex {
     _underlying_index: Index,
     reader: IndexReader,
     writer: Arc<Mutex<IndexWriter<TantivyDocument>>>,
+    query_parser: QueryParser,
 }
 
 pub enum BurkazDirectory<'a> {
@@ -72,11 +73,17 @@ impl BurkazIndex {
 
         let reader = index.reader().map_err(Into::<BurkazError>::into)?;
 
+        let query_parser = QueryParser::for_index(
+            &index,
+            index.schema().fields().map(|(field, _)| field).collect(),
+        );
+
         Ok(Self {
             _name: name,
             _underlying_index: index,
             reader: reader,
             writer: Arc::new(Mutex::new(writer)),
+            query_parser: query_parser,
         })
     }
 
@@ -91,6 +98,10 @@ impl BurkazIndex {
     #[inline]
     pub fn name(&self) -> &str {
         &self._name
+    }
+
+    pub fn query_parser(&self) -> &QueryParser {
+        &self.query_parser
     }
 
     pub fn get_writer(&self) -> crate::Result<MutexGuard<'_, IndexWriter<TantivyDocument>>> {

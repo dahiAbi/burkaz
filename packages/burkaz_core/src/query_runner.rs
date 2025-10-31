@@ -30,7 +30,7 @@ impl QueryRunner {
     }
 
     fn query(&self) -> Box<dyn Query> {
-        self._query.to_tantivy_query()
+        self._query.to_tantivy_query(&self._index)
     }
 
     pub fn count(&self) -> crate::Result<usize> {

@@ -296,6 +296,12 @@ external Pointer<CBurkazQuery> burkaz_term_set_query(
   int termArrayLength,
 );
 
+@Native<Pointer<CBurkazQuery> Function(Pointer<Char>, Size)>()
+external Pointer<CBurkazQuery> burkaz_parse_query(
+  Pointer<Char> queryTextPointer,
+  int queryTextLength,
+);
+
 @Native<
   Pointer<CBurkazQuery> Function(Pointer<Pointer<CBurkazTerm>>, Size, Uint32)
 >()

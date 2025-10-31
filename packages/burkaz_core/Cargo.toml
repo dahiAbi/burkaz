@@ -7,4 +7,5 @@ edition = "2024"
 crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
+byteorder = { version = "1.5.0", features = ["std"] }
 tantivy = "0.25.0"

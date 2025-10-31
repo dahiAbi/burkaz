@@ -43,6 +43,15 @@ class NativeBurkazIndex<T> extends BurkazIndex<T> {
     });
   }
 
+  /// Opens a native burkaz index asynchronously.
+  static Future<NativeBurkazIndex<T>> openAsync<T>({
+    required String name,
+    required Schema<T> schema,
+    Directory? directory,
+  }) => Isolate.run(
+    () => open<T>(name: name, schema: schema, directory: directory),
+  );
+
   @override
   Schema<T> get schema => _schema;
   final Schema<T> _schema;

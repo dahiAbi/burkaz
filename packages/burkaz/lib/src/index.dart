@@ -16,13 +16,22 @@ abstract class BurkazIndex<T> {
     required String name,
     required Schema<T> schema,
     Directory? directory,
-  }) {
-    return NativeBurkazIndex.open<T>(
-      name: name,
-      schema: schema,
-      directory: directory,
-    );
-  }
+  }) => NativeBurkazIndex.open<T>(
+    name: name,
+    schema: schema,
+    directory: directory,
+  );
+
+  /// Opens a burkaz index asynchronously.
+  static Future<BurkazIndex<T>> openAsync<T>({
+    required String name,
+    required Schema<T> schema,
+    Directory? directory,
+  }) => NativeBurkazIndex.openAsync<T>(
+    name: name,
+    schema: schema,
+    directory: directory,
+  );
 
   /// The name of the index.
   String get name;

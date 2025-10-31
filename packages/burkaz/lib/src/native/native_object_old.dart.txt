@@ -1,0 +1,113 @@
+part of 'native.dart';
+
+typedef FieldId = int;
+typedef AddressRange = (int, int);
+
+class NativeObject implements ObjectWriter, ObjectReader {
+  NativeObject._(this._header, this._bytesBuilder);
+
+  factory NativeObject() {
+    return NativeObject._([], BytesBuilder(copy: false));
+  }
+
+  factory NativeObject.fromBytes(Uint8List bytes) {
+    final List<(FieldId, AddressRange)> header = [];
+    final BytesBuilder bytesBuilder = BytesBuilder(copy: false);
+    final data = bytes.buffer.asByteData();
+    int offset = 0;
+
+    final headerLength = data.getInt64(offset, Endian.little);
+    offset += 8;
+
+    for (int index = 0; index < headerLength; index++) {
+      final fieldId = data.getUint32(offset, Endian.little);
+      offset += 4;
+      final start = data.getUint32(offset, Endian.little);
+      offset += 4;
+      final end = data.getUint32(offset, Endian.little);
+      offset += 4;
+      header.add((fieldId, (start, end)));
+    }
+
+    bytesBuilder.add(bytes.sublist(offset));
+
+    return NativeObject._(header, bytesBuilder);
+  }
+
+  final List<(FieldId, AddressRange)> _header;
+
+  final BytesBuilder _bytesBuilder;
+
+  @override
+  int? readInt(int index) {
+    final entry = _header.where((entry) => entry.$1 == index).firstOrNull;
+    if (entry == null) return null;
+    final (start, end) = entry.$2;
+    final valueBytes = _bytesBuilder.toBytes().sublist(start, end);
+    final data = valueBytes.buffer.asByteData();
+    final valueType = data.getUint8(0);
+    if (valueType != ValueType.int.index + 1) return null;
+    final value = data.getInt64(1, Endian.little);
+    return value;
+  }
+
+  @override
+  void writeInt(int index, int value) {
+    final data = ByteData(9);
+    data.setUint8(0, ValueType.int.index + 1);
+    data.setInt64(1, value, Endian.little);
+    final start = _bytesBuilder.length;
+    _bytesBuilder.add(data.buffer.asUint8List());
+    final end = start + data.lengthInBytes;
+    _header.add((index, (start, end)));
+  }
+
+  @override
+  String? readString(int index) {
+    final entry = _header.where((entry) => entry.$1 == index).firstOrNull;
+    if (entry == null) return null;
+    final (start, end) = entry.$2;
+    final valueBytes = _bytesBuilder.toBytes().sublist(start, end);
+    final data = valueBytes.buffer.asByteData();
+    final valueType = data.getUint8(0);
+    if (valueType != ValueType.text.index + 1) return null;
+    final valueLength = data.getUint64(1, Endian.little);
+    return utf8.decode(valueBytes.sublist(9, 9 + valueLength));
+  }
+
+  @override
+  void writeString(int index, String value) {
+    final bytes = utf8.encode(value);
+    final data = ByteData(bytes.length + 9);
+    data.setUint8(0, ValueType.text.index + 1);
+    data.setUint64(1, bytes.length, Endian.little);
+    final dataBytes = data.buffer.asUint8List();
+    dataBytes.setAll(9, bytes);
+    final start = _bytesBuilder.length;
+    _bytesBuilder.add(dataBytes);
+    final end = start + data.lengthInBytes;
+    _header.add((index, (start, end)));
+  }
+
+  Uint8List toBytes() {
+    final headerLength = _header.length;
+    final bytes = Uint8List(_bytesBuilder.length + (headerLength * 12) + 8);
+    final data = bytes.buffer.asByteData();
+    int offset = 0;
+    data.setUint64(offset, headerLength, Endian.little);
+    offset += 8;
+
+    for (int index = 0; index < headerLength; index++) {
+      final (fieldId, (start, end)) = _header[index];
+      data.setUint32(offset, fieldId, Endian.little);
+      offset += 4;
+      data.setUint32(offset, start, Endian.little);
+      offset += 4;
+      data.setUint32(offset, end, Endian.little);
+      offset += 4;
+    }
+
+    bytes.setAll(offset, _bytesBuilder.toBytes());
+    return bytes;
+  }
+}

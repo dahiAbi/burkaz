@@ -3,7 +3,7 @@ abstract class FieldOptions {
   const FieldOptions();
 
   /// The type of the field.
-  FieldType get type;
+  ValueType get type;
 
   /// Whether the field is stored.
   bool get isStored => false;
@@ -47,7 +47,7 @@ abstract class NumericFieldOptions extends FieldOptions {
        _coerce = coerce;
 
   @override
-  final FieldType type;
+  final ValueType type;
 
   final bool _indexed;
   @override
@@ -71,14 +71,14 @@ abstract class NumericFieldOptions extends FieldOptions {
 }
 
 /// The options for a 64-bit integer field in a schema.
-class Int64FieldOptions extends NumericFieldOptions {
-  const Int64FieldOptions({
+class IntFieldOptions extends NumericFieldOptions {
+  const IntFieldOptions({
     super.indexed,
     super.fieldnorms,
     super.fast,
     super.stored,
     super.coerce,
-  }) : super(type: FieldType.int64);
+  }) : super(type: ValueType.int);
 }
 
 /// The options for a text field in a schema.
@@ -94,11 +94,17 @@ class TextFieldOptions extends FieldOptions {
        _coerce = coerce;
 
   @override
-  final FieldType type = FieldType.text;
+  final ValueType type = ValueType.text;
 
   final IndexedTextFieldOptions? _indexed;
   @override
-  bool get isIndexed => _indexed != null;
+  bool get isIndexed => _indexed?.enabled == true;
+
+  @override
+  IndexingStrategy? get indexingStrategy => _indexed?.strategy;
+
+  @override
+  bool get fieldnorms => _indexed?.fieldnorms == true;
 
   @override
   String? get indexingTokenizer => _indexed?.tokenizer;
@@ -149,7 +155,7 @@ class IndexedTextFieldOptions {
   const IndexedTextFieldOptions.enabled({
     IndexingStrategy strategy = IndexingStrategy.basic,
     bool fieldnorms = true,
-    String? tokenizer,
+    String tokenizer = 'default',
   }) : this(
          enabled: true,
          strategy: strategy,
@@ -175,7 +181,15 @@ class IndexedTextFieldOptions {
 }
 
 /// The indexing strategy for a indexed text field.
-enum IndexingStrategy { basic, frequencies, frequenciesAndPositions }
+enum IndexingStrategy {
+  basic(1),
+  frequencies(2),
+  frequenciesAndPositions(3);
+
+  const IndexingStrategy(this.code);
+
+  final int code;
+}
 
 /// The type of a field.
-enum FieldType { int64, text }
+enum ValueType { int, text }

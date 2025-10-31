@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ffi';
+import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
 

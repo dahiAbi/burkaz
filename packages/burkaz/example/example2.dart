@@ -28,7 +28,7 @@ void printProducts(Iterable<Product> products) {
   }
 }
 
-void main() {
+void main() async {
   const Schema<Product> schema = StrictSchema<Product>(
     fields: [
       Field(
@@ -73,13 +73,13 @@ void main() {
   index.add(Product(id: generateId(), name: 'Redmi Note 14 pro+'));
   index.add(Product(id: generateId(), name: 'Redmi Note 14'));
 
-  print('products count: ${index.query(const AllQuery()).count()}');
+  print('products count: ${await index.query(const AllQuery()).countAsync()}');
 
   printProducts(
-    index
+    await index
         .query(
           const RegexPhaseQuery(field: 'name', terms: ['i', 'pro'], slop: 2),
         )
-        .search(limit: 100),
+        .searchAsync(limit: 100),
   );
 }

@@ -33,6 +33,9 @@ class NativeQueryRunner<T> extends QueryRunner<T> {
   }
 
   @override
+  Future<int> countAsync() => Isolate.run(count);
+
+  @override
   List<T> search({int offset = 0, int limit = 1}) {
     if (limit == 0) return const [];
 
@@ -82,6 +85,10 @@ class NativeQueryRunner<T> extends QueryRunner<T> {
   }
 
   @override
+  Future<List<T>> searchAsync({int offset = 0, int limit = 1}) =>
+      Isolate.run(() => search(offset: offset, limit: limit));
+
+  @override
   List<Address> addresses({int offset = 0, int limit = 1}) {
     if (limit == 0) return const [];
 
@@ -124,7 +131,14 @@ class NativeQueryRunner<T> extends QueryRunner<T> {
   }
 
   @override
+  Future<List<Address>> addressesAsync({int offset = 0, int limit = 1}) =>
+      Isolate.run(() => addresses(offset: offset, limit: limit));
+
+  @override
   void deleteAll() {
     burkaz_query_runner_delete_all(_ptr).checkError();
   }
+
+  @override
+  Future<void> deleteAllAsync() => Isolate.run(deleteAll);
 }

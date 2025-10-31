@@ -67,6 +67,9 @@ class NativeBurkazIndex<T> extends BurkazIndex<T> {
   }
 
   @override
+  Future<void> addAsync(T object) => Isolate.run(() => add(object));
+
+  @override
   void addAll(Iterable<T> objects) {
     final objectList = objects is List<T>
         ? objects
@@ -89,9 +92,16 @@ class NativeBurkazIndex<T> extends BurkazIndex<T> {
   }
 
   @override
+  Future<void> addAllAsync(Iterable<T> objects) =>
+      Isolate.run(() => addAll(objects));
+
+  @override
   void clear() {
     burkaz_index_clear(ptr).checkError();
   }
+
+  @override
+  Future<void> clearAsync() => Isolate.run(clear);
 
   @override
   QueryRunner<T> query(Query query) {
@@ -121,6 +131,9 @@ class NativeBurkazIndex<T> extends BurkazIndex<T> {
   }
 
   @override
+  Future<T> getAsync(Address address) => Isolate.run(() => get(address));
+
+  @override
   void close() {
     final ptr = _ptr;
     if (ptr != null) {
@@ -128,6 +141,9 @@ class NativeBurkazIndex<T> extends BurkazIndex<T> {
       burkaz_index_close(ptr);
     }
   }
+
+  @override
+  Future<void> closeAsync() => Isolate.run(close);
 
   /// Converts an object to a native burkaz object.
   @protected

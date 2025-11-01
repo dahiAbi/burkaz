@@ -8,6 +8,8 @@ extension TermToNativeExtension on Term {
     switch ((valueType, value)) {
       case (ValueType.int, final int value):
         return burkaz_term_int(fieldId, value);
+      case (ValueType.boolean, final bool value):
+        return burkaz_term_boolean(fieldId, value);
       case (ValueType.text, final String value):
         final valuePointer = value.toNativeUtf8(allocator: allocator);
         return burkaz_term_text(fieldId, valuePointer.cast(), value.length);

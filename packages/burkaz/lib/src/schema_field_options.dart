@@ -35,7 +35,7 @@ abstract class NumericFieldOptions extends FieldOptions {
   const NumericFieldOptions({
     required this.type,
     bool indexed = false,
-    bool fieldnorms = true,
+    bool fieldnorms = false,
     bool fast = false,
     bool stored = false,
     bool coerce = false,
@@ -79,6 +79,17 @@ class IntFieldOptions extends NumericFieldOptions {
     super.stored,
     super.coerce,
   }) : super(type: ValueType.int);
+}
+
+/// The options for a boolean field in a schema.
+class BooleanFieldOptions extends NumericFieldOptions {
+  const BooleanFieldOptions({
+    super.indexed,
+    super.fieldnorms,
+    super.fast,
+    super.stored,
+    super.coerce,
+  }) : super(type: ValueType.boolean);
 }
 
 /// The options for a text field in a schema.
@@ -192,4 +203,4 @@ enum IndexingStrategy {
 }
 
 /// The type of a field.
-enum ValueType { int, text }
+enum ValueType { int, text, boolean }

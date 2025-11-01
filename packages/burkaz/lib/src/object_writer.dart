@@ -7,4 +7,7 @@ abstract class ObjectWriter {
 
   /// Writes a string to the object.
   void writeString(int index, String value);
+
+  /// Writes a boolean to the object.
+  void writeBoolean(int index, bool value);
 }

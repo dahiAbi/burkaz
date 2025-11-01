@@ -115,7 +115,23 @@ external bool burkaz_object_read_int(
 external void burkaz_object_write_int(
   Pointer<CBurkazObject> objectPointer,
   int fieldId,
-  int valuePointer,
+  int value,
+);
+
+@Native<Bool Function(Pointer<CBurkazObject>, Uint32, Pointer<Bool>)>(
+  isLeaf: true,
+)
+external bool burkaz_object_read_boolean(
+  Pointer<CBurkazObject> objectPointer,
+  int fieldId,
+  Pointer<Bool> valuePointer,
+);
+
+@Native<Void Function(Pointer<CBurkazObject>, Uint32, Bool)>(isLeaf: true)
+external void burkaz_object_write_boolean(
+  Pointer<CBurkazObject> objectPointer,
+  int fieldId,
+  bool value,
 );
 
 @Native<Bool Function(Pointer<CBurkazObject>, Uint32, Pointer<Pointer<Char>>)>(
@@ -339,3 +355,6 @@ external Pointer<CBurkazTerm> burkaz_term_text(
 
 @Native<Pointer<CBurkazTerm> Function(Uint32, Int64)>()
 external Pointer<CBurkazTerm> burkaz_term_int(int fieldId, int value);
+
+@Native<Pointer<CBurkazTerm> Function(Uint32, Bool)>()
+external Pointer<CBurkazTerm> burkaz_term_boolean(int fieldId, bool value);

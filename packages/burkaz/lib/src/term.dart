@@ -27,4 +27,8 @@ class Term {
   /// Creates a term with a text value.
   const Term.text(String field, String value)
     : this(field: field, valueType: ValueType.text, value: value);
+
+  /// Creates a term with a boolean value.
+  const Term.boolean(String field, bool value)
+    : this(field: field, valueType: ValueType.boolean, value: value);
 }

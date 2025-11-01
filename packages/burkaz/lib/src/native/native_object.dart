@@ -23,6 +23,16 @@ class NativeObject implements ObjectWriter, ObjectReader {
   }
 
   @override
+  bool? readBoolean(int index) {
+    return using((arena) {
+      final valuePointer = arena<Bool>();
+      final exists = burkaz_object_read_boolean(_ptr, index, valuePointer);
+      if (!exists) return null;
+      return valuePointer.value;
+    });
+  }
+
+  @override
   String? readString(int index) {
     return using((arena) {
       final valuePointer = arena<Pointer<Char>>();
@@ -39,6 +49,11 @@ class NativeObject implements ObjectWriter, ObjectReader {
   @override
   void writeInt(int index, int value) {
     burkaz_object_write_int(_ptr, index, value);
+  }
+
+  @override
+  void writeBoolean(int index, bool value) {
+    burkaz_object_write_boolean(_ptr, index, value);
   }
 
   @override

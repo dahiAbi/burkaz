@@ -7,4 +7,7 @@ abstract class ObjectReader {
 
   /// Reads a string from the object.
   String? readString(int index);
+
+  /// Reads a boolean from the object.
+  bool? readBoolean(int index);
 }

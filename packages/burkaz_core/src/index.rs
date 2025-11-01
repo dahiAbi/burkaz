@@ -1,6 +1,6 @@
 use std::{
     path::Path,
-    sync::{Arc, Mutex, MutexGuard},
+    sync::{Arc, Mutex, MutexGuard, Weak},
 };
 
 use tantivy::{
@@ -17,6 +17,14 @@ use crate::{address::BurkazObjectAddr, schema::BurkazSchema};
 
 #[derive(Clone)]
 pub struct BurkazIndex(Arc<InnerBurkazIndex>);
+
+pub struct WeakBurkazIndex(Weak<InnerBurkazIndex>);
+
+impl WeakBurkazIndex {
+    pub fn upgrade(&self) -> Option<BurkazIndex> {
+        self.0.upgrade().map(BurkazIndex)
+    }
+}
 
 struct InnerBurkazIndex {
     _name: String,
@@ -108,6 +116,10 @@ impl BurkazIndex {
 
     pub fn into_raw(self) -> *mut Self {
         Box::into_raw(Box::new(self))
+    }
+
+    pub fn downgrade(&self) -> WeakBurkazIndex {
+        WeakBurkazIndex(Arc::downgrade(&self.0))
     }
 
     #[inline]

@@ -23,7 +23,7 @@ pub extern "C" fn burkaz_query_runner_new(
             query_from_ptr!(query_ptr)
         };
 
-        let query_runner = QueryRunner::new(index, query);
+        let query_runner = QueryRunner::new(index.downgrade(), query);
 
         unsafe {
             *query_runner_ptr = query_runner.into_raw().cast();

@@ -4,16 +4,21 @@ use tantivy::{
     query::Query,
 };
 
-use crate::{address::BurkazObjectAddr, index::BurkazIndex, query::BurkazQuery};
+use crate::{
+    address::BurkazObjectAddr,
+    error::BurkazError,
+    index::{BurkazIndex, WeakBurkazIndex},
+    query::BurkazQuery,
+};
 
 pub struct QueryRunner {
-    _index: BurkazIndex,
+    _index: WeakBurkazIndex,
     _query: BurkazQuery,
 }
 
 impl QueryRunner {
     #[inline]
-    pub fn new(index: BurkazIndex, query: BurkazQuery) -> Self {
+    pub fn new(index: WeakBurkazIndex, query: BurkazQuery) -> Self {
         Self {
             _index: index,
             _query: query,
@@ -25,24 +30,34 @@ impl QueryRunner {
     }
 
     #[inline]
-    fn searcher(&self) -> Searcher {
-        self._index.searcher()
+    fn index(&self) -> Option<BurkazIndex> {
+        self._index.upgrade()
     }
 
-    fn query(&self) -> Box<dyn Query> {
-        self._query.to_tantivy_query(&self._index)
+    #[inline]
+    fn searcher(&self) -> Option<Searcher> {
+        self._index.upgrade().map(move |index| index.searcher())
+    }
+
+    fn query(&self) -> Option<Box<dyn Query>> {
+        self.index()
+            .map(|index| self._query.to_tantivy_query(&index))
     }
 
     pub fn count(&self) -> crate::Result<usize> {
         self.searcher()
-            .search(&self.query(), &Count)
+            .ok_or(BurkazError::IndexClosed)?
+            .search(&self.query().ok_or(BurkazError::IndexClosed)?, &Count)
             .map_err(Into::into)
     }
 
     pub fn search(&self, offset: usize, limit: usize) -> crate::Result<Vec<BurkazObjectAddr>> {
-        let query = self.query();
+        let query = self.query().ok_or(BurkazError::IndexClosed)?;
         let collector = TopDocs::with_limit(limit).and_offset(offset);
-        let score_and_addrs = self.searcher().search(&query, &collector)?;
+        let score_and_addrs = self
+            .searcher()
+            .ok_or(BurkazError::IndexClosed)?
+            .search(&query, &collector)?;
         Ok(score_and_addrs
             .iter()
             .map(move |(_, addr)| (*addr).into())
@@ -50,6 +65,8 @@ impl QueryRunner {
     }
 
     pub fn delete_all(&self) -> crate::Result<()> {
-        self._index.delete_all_by_query(self.query())
+        self.index()
+            .ok_or(BurkazError::IndexClosed)?
+            .delete_all_by_query(self.query().ok_or(BurkazError::IndexClosed)?)
     }
 }

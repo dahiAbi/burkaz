@@ -34,6 +34,7 @@ impl BurkazTerm<Vec<u8>> {
 
         match value {
             ReferenceValueLeaf::I64(value) => write_value!(Int64, i64, value),
+            ReferenceValueLeaf::Bool(value) => write_value!(Boolean, bool, value),
             ReferenceValueLeaf::Str(value) => write_value!(Text, Cow<str>, &Cow::Borrowed(value)),
             _ => unimplemented!("Unsupported value: {:?}", value),
         }
@@ -106,6 +107,7 @@ where
                 let text_val = val.as_text().unwrap();
                 bytes.extend_from_slice(text_val.as_bytes());
             }
+            crate::object::ValueType::Boolean => write_fast_value!(Bool, val.as_bool().unwrap()),
             _ => unimplemented!("Unsupported term value type: {:?}", val_type),
         }
 

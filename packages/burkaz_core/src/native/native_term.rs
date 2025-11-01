@@ -16,6 +16,12 @@ pub extern "C" fn burkaz_term_int(field_id: u32, value: i64) -> *const c_void {
 }
 
 #[unsafe(no_mangle)]
+pub extern "C" fn burkaz_term_boolean(field_id: u32, value: bool) -> *const c_void {
+    let term = BurkazTerm::new(field_id, &value.into());
+    Box::new(term).into_raw().cast()
+}
+
+#[unsafe(no_mangle)]
 pub extern "C" fn burkaz_term_text(
     field_id: u32,
     value_ptr: *const c_char,

@@ -21,6 +21,7 @@ impl BurkazSchemaField {
 pub enum BurkazSchemaFieldType {
     Int64,
     Text,
+    Boolean,
 }
 
 #[derive(Debug)]
@@ -106,6 +107,7 @@ impl Into<FieldType> for BurkazSchemaFieldOptions {
         match self.typ {
             BurkazSchemaFieldType::Int64 => FieldType::I64(self.into()),
             BurkazSchemaFieldType::Text => FieldType::Str(self.into()),
+            BurkazSchemaFieldType::Boolean => FieldType::Bool(self.into()),
         }
     }
 }

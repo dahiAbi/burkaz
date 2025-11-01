@@ -2,8 +2,8 @@ use std::ffi::{c_char, c_void};
 
 use crate::{
     schema::{
-        BurkazSchema, BurkazSchemaField, BurkazSchemaFieldOptions, BurkazSchemaFieldType,
-        BurkazIndexingStrategy,
+        BurkazIndexingStrategy, BurkazSchema, BurkazSchemaField, BurkazSchemaFieldOptions,
+        BurkazSchemaFieldType,
     },
     str_from_ptr,
 };
@@ -61,6 +61,7 @@ fn options_from_native(c_options: &CBurkazSchemaFieldOptions) -> Option<BurkazSc
     let typ = match c_options.typ {
         1 => BurkazSchemaFieldType::Int64,
         2 => BurkazSchemaFieldType::Text,
+        3 => BurkazSchemaFieldType::Boolean,
         _ => return None,
     };
 

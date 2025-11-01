@@ -32,6 +32,23 @@ pub extern "C" fn burkaz_object_read_int(
 }
 
 #[unsafe(no_mangle)]
+pub extern "C" fn burkaz_object_read_boolean(
+    object_ptr: *const c_void,
+    field_id: u32,
+    value_ptr: *mut bool,
+) -> bool {
+    let object = unsafe { &*(object_ptr as *const TantivyDocument) };
+    let mut values = object.get_all(tantivy::schema::Field::from_field_id(field_id));
+    let value_opt = values.next().and_then(|value| value.as_bool());
+    if let Some(value) = value_opt {
+        unsafe { *value_ptr = value };
+        true
+    } else {
+        false
+    }
+}
+
+#[unsafe(no_mangle)]
 pub extern "C" fn burkaz_object_read_text(
     object_ptr: *const c_void,
     field_id: u32,
@@ -59,6 +76,12 @@ pub extern "C" fn burkaz_object_read_text(
 pub extern "C" fn burkaz_object_write_int(object_ptr: *const c_void, field_id: u32, value: i64) {
     let object = unsafe { &mut *(object_ptr as *mut TantivyDocument) };
     object.add_i64(tantivy::schema::Field::from_field_id(field_id), value);
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn burkaz_object_write_boolean(object_ptr: *const c_void, field_id: u32, value: bool) {
+    let object = unsafe { &mut *(object_ptr as *mut TantivyDocument) };
+    object.add_bool(tantivy::schema::Field::from_field_id(field_id), value);
 }
 
 #[unsafe(no_mangle)]

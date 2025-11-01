@@ -20,6 +20,7 @@ pub enum ValueType {
     Null = 0,
     Int64 = 1,
     Text = 2,
+    Boolean = 3,
 }
 
 type Addr = u32;
@@ -112,6 +113,10 @@ impl BurkazObject {
                 write_type!(Text);
                 write_value!(value);
             }
+            OwnedValue::Bool(value) => {
+                write_type!(Boolean);
+                write_value!(value);
+            }
             _ => return,
         }
 
@@ -193,6 +198,7 @@ impl<'a> BurkazValueRef<'a> {
             0 => ValueType::Null,
             1 => ValueType::Int64,
             2 => ValueType::Text,
+            3 => ValueType::Boolean,
             _ => ValueType::Null,
         }
     }
@@ -212,6 +218,13 @@ impl<'a> BurkazValueRef<'a> {
         let str_bytes = self.0.as_ref().get(9..9 + len)?;
         Some(unsafe { std::str::from_utf8_unchecked(str_bytes) })
     }
+
+    pub fn as_bool(&self) -> Option<bool> {
+        if self.typ() != ValueType::Boolean {
+            return None;
+        }
+        Some(self.0.as_ref().get(1)? == &1u8)
+    }
 }
 
 impl<'a> Value<'a> for BurkazValueRef<'a> {
@@ -223,6 +236,7 @@ impl<'a> Value<'a> for BurkazValueRef<'a> {
             ValueType::Null => ReferenceValueLeaf::Null.into(),
             ValueType::Int64 => ReferenceValueLeaf::I64(self.as_int().unwrap()).into(),
             ValueType::Text => ReferenceValueLeaf::Str(self.as_text().unwrap()).into(),
+            ValueType::Boolean => ReferenceValueLeaf::Bool(self.as_bool().unwrap()).into(),
         }
     }
 }
@@ -325,6 +339,19 @@ impl BinarySerializable for u8 {
     }
 }
 
+impl BinarySerializable for bool {
+    #[inline]
+    fn serialize<W: std::io::Write + ?Sized>(&self, writer: &mut W) -> std::io::Result<()> {
+        writer.write_u8(*self as u8)
+    }
+
+    #[inline]
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
+        let value = u8::deserialize(reader)?;
+        Ok(value == 1u8)
+    }
+}
+
 macro_rules! impl_numeric_binary_serializable {
     ($type:ty, $size:expr, $write_method:ident, $read_method:ident) => {
         impl BinarySerializable for $type {
@@ -389,6 +416,8 @@ mod tests {
         assert_eq!(value.typ(), ValueType::Int64);
         let value = BurkazValueRef(&[2]);
         assert_eq!(value.typ(), ValueType::Text);
+        let value = BurkazValueRef(&[3]);
+        assert_eq!(value.typ(), ValueType::Boolean);
         let value = BurkazValueRef(&[4]);
         assert_eq!(value.typ(), ValueType::Null); // invalid type code
     }

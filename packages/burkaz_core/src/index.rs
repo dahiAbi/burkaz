@@ -9,13 +9,16 @@ use tantivy::{
     directory::{Directory, MmapDirectory, RamDirectory},
     indexer::IndexWriterOptions,
     query::{Query, QueryParser},
+    schema::FieldType,
 };
 
 use crate::error::BurkazError;
 use crate::{address::BurkazObjectAddr, schema::BurkazSchema};
 
 #[derive(Clone)]
-pub struct BurkazIndex {
+pub struct BurkazIndex(Arc<InnerBurkazIndex>);
+
+struct InnerBurkazIndex {
     _name: String,
     _underlying_index: Index,
     reader: IndexReader,
@@ -73,18 +76,30 @@ impl BurkazIndex {
 
         let reader = index.reader().map_err(Into::<BurkazError>::into)?;
 
-        let query_parser = QueryParser::for_index(
-            &index,
-            index.schema().fields().map(|(field, _)| field).collect(),
-        );
+        let query_parser = {
+            let schema = index.schema();
+            let mut parser =
+                QueryParser::for_index(&index, schema.fields().map(|(field, _)| field).collect());
+            for (field, entry) in schema.fields() {
+                if entry.is_indexed() {
+                    if matches!(
+                        entry.field_type(),
+                        FieldType::Str(_) | FieldType::JsonObject(_)
+                    ) {
+                        parser.set_field_fuzzy(field, false, 2, true);
+                    }
+                }
+            }
+            parser
+        };
 
-        Ok(Self {
+        Ok(BurkazIndex(Arc::new(InnerBurkazIndex {
             _name: name,
             _underlying_index: index,
             reader: reader,
             writer: Arc::new(Mutex::new(writer)),
             query_parser: query_parser,
-        })
+        })))
     }
 
     pub unsafe fn from_raw(ptr: *mut Self) -> Self {
@@ -97,22 +112,23 @@ impl BurkazIndex {
 
     #[inline]
     pub fn name(&self) -> &str {
-        &self._name
+        &self.0._name
     }
 
     pub fn query_parser(&self) -> &QueryParser {
-        &self.query_parser
+        &self.0.query_parser
     }
 
     pub fn get_writer(&self) -> crate::Result<MutexGuard<'_, IndexWriter<TantivyDocument>>> {
-        self.writer
+        self.0
+            .writer
             .lock()
             .map_err(|e| BurkazError::UnknownError(e.to_string()))
     }
 
     #[inline]
     pub fn searcher(&self) -> Searcher {
-        self.reader.searcher()
+        self.0.reader.searcher()
     }
 
     pub fn get(&self, addr: BurkazObjectAddr) -> crate::Result<TantivyDocument> {
@@ -136,7 +152,7 @@ impl BurkazIndex {
 
         writer.commit().map_err(Into::<BurkazError>::into)?;
 
-        self.reader.reload().map_err(Into::<BurkazError>::into)?;
+        self.0.reader.reload().map_err(Into::<BurkazError>::into)?;
 
         Ok(())
     }
@@ -156,7 +172,7 @@ impl BurkazIndex {
 
         writer.commit().map_err(Into::<BurkazError>::into)?;
 
-        self.reader.reload().map_err(Into::<BurkazError>::into)?;
+        self.0.reader.reload().map_err(Into::<BurkazError>::into)?;
 
         Ok(())
     }
@@ -170,7 +186,7 @@ impl BurkazIndex {
 
         writer.commit().map_err(Into::<BurkazError>::into)?;
 
-        self.reader.reload().map_err(Into::<BurkazError>::into)?;
+        self.0.reader.reload().map_err(Into::<BurkazError>::into)?;
 
         Ok(())
     }
@@ -184,7 +200,7 @@ impl BurkazIndex {
 
         writer.commit().map_err(Into::<BurkazError>::into)?;
 
-        self.reader.reload().map_err(Into::<BurkazError>::into)?;
+        self.0.reader.reload().map_err(Into::<BurkazError>::into)?;
 
         Ok(())
     }

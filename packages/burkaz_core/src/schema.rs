@@ -5,6 +5,7 @@ use tantivy::schema::{
     TextOptions,
 };
 
+#[derive(Debug)]
 pub struct BurkazSchemaField {
     pub name: String,
     pub options: BurkazSchemaFieldOptions,
@@ -16,11 +17,13 @@ impl BurkazSchemaField {
     }
 }
 
+#[derive(Debug)]
 pub enum BurkazSchemaFieldType {
     Int64,
     Text,
 }
 
+#[derive(Debug)]
 pub struct BurkazSchemaFieldOptions {
     pub typ: BurkazSchemaFieldType,
     pub stored: bool,
@@ -69,7 +72,7 @@ impl Into<IndexRecordOption> for BurkazIndexingStrategy {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct BurkazSchema {
     fields: Vec<BurkazSchemaField>,
 }

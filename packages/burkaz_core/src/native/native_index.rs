@@ -15,7 +15,7 @@ use crate::{
 #[macro_export]
 macro_rules! index_from_ptr {
     ($index_ptr:expr) => {
-        unsafe { (*($index_ptr as *mut crate::index::BurkazIndex)).clone() }
+        unsafe { (&*($index_ptr as *mut crate::index::BurkazIndex)).clone() }
     };
 }
 

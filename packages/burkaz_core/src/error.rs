@@ -78,6 +78,7 @@ pub enum BurkazError {
     UnknownError(String),
     NullPointer(&'static str),
     ObjectNotFound(BurkazObjectAddr),
+    IndexClosed,
 }
 
 impl From<BurkazObjectAddr> for BurkazError {
@@ -99,6 +100,7 @@ impl std::fmt::Display for BurkazError {
             BurkazError::UnknownError(error) => write!(f, "Unknown error: {}", error),
             BurkazError::NullPointer(error) => write!(f, "Null pointer error: {}", error),
             BurkazError::ObjectNotFound(addr) => write!(f, "Object not found: {}", addr),
+            BurkazError::IndexClosed => write!(f, "Index closed"),
         }
     }
 }
@@ -109,7 +111,10 @@ impl std::fmt::Debug for BurkazError {
             BurkazError::TantivyError(error) => write!(f, "BurkazError::TantivyError({:?})", error),
             BurkazError::UnknownError(error) => write!(f, "BurkazError::UnknownError({:?})", error),
             BurkazError::NullPointer(error) => write!(f, "BurkazError::NullPointer({:?})", error),
-            BurkazError::ObjectNotFound(addr) => write!(f, "BurkazError::ObjectNotFound({:?})", addr),
+            BurkazError::ObjectNotFound(addr) => {
+                write!(f, "BurkazError::ObjectNotFound({:?})", addr)
+            }
+            BurkazError::IndexClosed => write!(f, "BurkazError::IndexClosed"),
         }
     }
 }

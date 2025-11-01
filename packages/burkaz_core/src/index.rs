@@ -6,7 +6,7 @@ use std::{
 use tantivy::{
     Index, IndexBuilder, IndexReader, IndexWriter, Searcher, SegmentOrdinal, TantivyDocument,
     TantivyError,
-    directory::{Directory, MmapDirectory, RamDirectory},
+    directory::{Directory, MmapDirectory},
     indexer::IndexWriterOptions,
     query::{Query, QueryParser},
     schema::FieldType,
@@ -64,18 +64,21 @@ impl BurkazIndex {
     ) -> crate::Result<Self> {
         let index_builder = IndexBuilder::new().schema(schema.into());
 
-        let index = index_builder
-            .open_or_create(match directory {
-                BurkazDirectory::InMemory => {
-                    Box::new(RamDirectory::default()) as Box<dyn Directory>
-                }
-                BurkazDirectory::OnDisk(path) => Box::new(
+        let index = match directory {
+            BurkazDirectory::InMemory => index_builder
+                .create_in_ram()
+                .map_err(Into::<BurkazError>::into)?,
+            BurkazDirectory::OnDisk(path) => {
+                let directory = Box::new(
                     MmapDirectory::open(path)
                         .map_err(Into::<TantivyError>::into)
                         .map_err(Into::<BurkazError>::into)?,
-                ) as Box<dyn Directory>,
-            })
-            .map_err(Into::<BurkazError>::into)?;
+                ) as Box<dyn Directory>;
+                index_builder
+                    .open_or_create(directory)
+                    .map_err(Into::<BurkazError>::into)?
+            }
+        };
 
         let writer_options = IndexWriterOptions::builder().build();
         let writer = index

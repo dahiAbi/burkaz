@@ -35,7 +35,7 @@ abstract class NumericFieldOptions extends FieldOptions {
   const NumericFieldOptions({
     required this.type,
     bool indexed = false,
-    bool fieldnorms = false,
+    bool fieldnorms = true,
     bool fast = false,
     bool stored = false,
     bool coerce = false,
@@ -155,7 +155,7 @@ class IndexedTextFieldOptions {
   const IndexedTextFieldOptions.enabled({
     IndexingStrategy strategy = IndexingStrategy.basic,
     bool fieldnorms = true,
-    String tokenizer = 'default',
+    String? tokenizer,
   }) : this(
          enabled: true,
          strategy: strategy,

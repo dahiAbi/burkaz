@@ -23,6 +23,7 @@ Product deserialize(ObjectReader reader) {
 }
 
 void printProducts(Iterable<Product> products) {
+  print('products count: ${products.length}');
   for (final product in products) {
     print('${product.id}: ${product.name}');
   }
@@ -76,10 +77,10 @@ void main() async {
   print('products count: ${await index.query(const AllQuery()).countAsync()}');
 
   printProducts(
-    await index
-        .query(
-          const RegexPhaseQuery(field: 'name', terms: ['i', 'pro'], slop: 2),
-        )
-        .searchAsync(limit: 100),
+    await index.query(const ParseQuery('iphone')).searchAsync(limit: 100),
   );
+
+  index.close();
+
+  print('index closed');
 }

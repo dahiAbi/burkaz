@@ -8,6 +8,8 @@ void main(List<String> args) async {
       cratePath: '../burkaz_core',
     );
 
+    // 3
+
     await rustBuilder.run(input: input, output: output);
   });
 }

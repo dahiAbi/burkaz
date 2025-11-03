@@ -6,19 +6,21 @@ class NativeQueryRunner<T> extends QueryRunner<T> {
   final Pointer<CBurkazQueryRunner> _ptr;
 
   /// The native burkaz index.
-  final NativeBurkazIndex<T> _index;
+  final WeakReference<NativeBurkazIndex<T>> _index;
 
   const NativeQueryRunner._(this._index, this._ptr);
 
   /// The finalizer of the native burkaz query runner.
-  static final _finalizer = Finalizer(burkaz_free_query_runner);
+  static final _finalizer = Finalizer<Pointer<CBurkazQueryRunner>>(
+    burkaz_free_query_runner,
+  );
 
   /// Creates a native burkaz query runner from a pointer.
   factory NativeQueryRunner.fromPointer(
     NativeBurkazIndex<T> index,
     Pointer<CBurkazQueryRunner> ptr,
   ) {
-    final runner = NativeQueryRunner<T>._(index, ptr);
+    final runner = NativeQueryRunner<T>._(WeakReference(index), ptr);
     _finalizer.attach(runner, runner._ptr, detach: runner);
     return runner;
   }
@@ -37,6 +39,8 @@ class NativeQueryRunner<T> extends QueryRunner<T> {
 
   @override
   List<T> search({int offset = 0, int limit = 1}) {
+    final indexRef = _index.target;
+    if (indexRef == null) return const [];
     if (limit == 0) return const [];
 
     assert(offset >= 0, 'Offset must be greater than or equal to 0');
@@ -69,11 +73,11 @@ class NativeQueryRunner<T> extends QueryRunner<T> {
         for (int index = 0; index < resultArrayLength; index++) {
           final rawAddress = resultArray[index];
           burkaz_index_get(
-            _index.ptr,
+            indexRef.ptr,
             rawAddress,
             objectPointerPointer,
           ).checkError();
-          final object = _index.objectFromNative(objectPointerPointer.value);
+          final object = indexRef.objectFromNative(objectPointerPointer.value);
           result.add(object);
         }
       } finally {

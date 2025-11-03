@@ -5,27 +5,52 @@ class Product {
 
   final String name;
 
-  const Product({required this.id, required this.name});
+  final bool isActive;
+
+  final List<String> tags;
+
+  const Product({
+    required this.id,
+    required this.name,
+    this.isActive = true,
+    this.tags = const [],
+  });
 
   @override
   String toString() {
-    return 'Product(id: $id, name: $name)';
+    return 'Product(id: $id, name: $name, isActive: $isActive, tags: $tags)';
   }
 }
 
 void serialize(ObjectWriter writer, Product product) {
   writer.writeInt(0, product.id);
   writer.writeString(1, product.name);
+  writer.writeBoolean(2, product.isActive);
+  writer.writeStringList(3, product.tags);
 }
 
 Product deserialize(ObjectReader reader) {
-  return Product(id: reader.readInt(0) ?? 0, name: reader.readString(1) ?? '');
+  return Product(
+    id: reader.readInt(0) ?? 0,
+    name: reader.readString(1) ?? '',
+    isActive: reader.readBoolean(2) ?? false,
+    tags: reader.readStringList(3) ?? [],
+  );
+}
+
+void writeMoney(ObjectWriter writer, String money) {
+  // writer.writeInt(0, money.numerator);
+  // writer.writeInt(1, money.denominator);
 }
 
 void printProducts(Iterable<Product> products) {
   print('products count: ${products.length}');
   for (final product in products) {
-    print('${product.id}: ${product.name}');
+    print(
+      '${product.id}: ${product.name} '
+      '(${product.isActive ? 'active' : 'inactive'})'
+      'tags: ${product.tags.join(', ')}',
+    );
   }
 }
 
@@ -52,6 +77,11 @@ void main() async {
           //
         ),
       ),
+      Field(
+        name: 'is_active',
+        options: BooleanFieldOptions(stored: true, indexed: true),
+      ),
+      Field(name: 'tags', options: TextFieldOptions(stored: true)),
     ],
     serialize: serialize,
     deserialize: deserialize,
@@ -62,7 +92,9 @@ void main() async {
   int idCounter = 1;
   int generateId() => idCounter++;
 
-  index.add(Product(id: generateId(), name: 'Mary Corek'));
+  index.add(
+    Product(id: generateId(), name: 'Mary Corek', tags: ['corek', 'nanlar']),
+  );
   index.add(Product(id: generateId(), name: 'Ahal Kici Corek'));
   index.add(Product(id: generateId(), name: 'Ahal Suytli Corek'));
   index.add(Product(id: generateId(), name: 'Iphone 15 pro max'));
@@ -74,11 +106,7 @@ void main() async {
   index.add(Product(id: generateId(), name: 'Redmi Note 14 pro+'));
   index.add(Product(id: generateId(), name: 'Redmi Note 14'));
 
-  print('products count: ${await index.query(const AllQuery()).countAsync()}');
-
-  printProducts(
-    await index.query(const ParseQuery('iphone')).searchAsync(limit: 100),
-  );
+  printProducts(index.query(const AllQuery()).search(limit: 100));
 
   index.close();
 
